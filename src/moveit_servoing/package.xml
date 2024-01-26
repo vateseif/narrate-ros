@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>moveit_servoing</name>
+  <version>1.0.0</version>
+  <description>ROS wrapper for hand retargeting from camera</description>
+  <maintainer email="zrene@ethz.ch">René Zurbrügg</maintainer>
+  <author email="zrene@ethz.ch">René Zurbrügg</author>
+  <license>BSD</license>
+  <!-- buildtool_depend: dependencies of the build process -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <!-- build_depend: dependencies only used in source files -->
+  <build_depend>boost</build_depend>
+  <!-- depend: build, export, and execution dependency -->
+  <depend>moveit_servo</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>roscpp</depend>
+</package>
