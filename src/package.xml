@@ -1,20 +1,18 @@
 <?xml version="1.0"?>
 <package>
-  <name>l2o_interface_mock</name>
+  <name>l2c</name>
   <version>0.1.0</version>
-  <description>The moveit_tutorials package</description>
+  <description>Code implementation for the paper Language To Control</description>
   <license>BSD</license>
 
-  <author email="sachinc@willowgarage.com">Sachin Chitta</author>
-  <author email="dave@picknik.ai">Dave Coleman</author>
-  <author email="mike@picknik.ai">Mike Lautman</author>
+  <author email="vateseif@gmail.com">Seif Ismail</author>
+  <author email="avarabues@gmail.com">Antonio Arbues</author>
 
-  <maintainer email="dave@picknik.ai">Dave Coleman</maintainer>
-  <maintainer email="mike@picknik.ai">Mike Lautman</maintainer>
+  <maintainer email="vateseif@gmail.com">Seif Ismail</maintainer>
+  <maintainer email="avarabues@gmail.com">Antonio Arbues</maintainer>
 
-  <url type="website">https://ros-planning.github.io/moveit_tutorials</url>
-  <url type="repository">https://github.com/ros-planning/moveit_tutorials</url>
-  <url type="bugtracker">https://github.com/ros-planning/moveit_tutorials/issues</url>
+  <!-- TODO: Replace the following with the github.io of the paper once done -->
+  <url type="website">https://seifismail.com/l2c</url> 
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -70,10 +68,7 @@
 
   <export>
     <!-- An example controller manager plugin for MoveIt. This is not functional code. -->
-    <moveit_core plugin="${prefix}/doc/controller_configuration/moveit_controller_manager_example_plugin_description.xml"/>
-
-    <!-- An example of planner plugin for MoveIt -->
-    <moveit_core plugin="${prefix}/doc/creating_moveit_plugins/lerp_motion_planner/lerp_interface_plugin_description.xml"/>
+    <!-- moveit_core plugin="${prefix}/doc/controller_configuration/moveit_controller_manager_example_plugin_description.xml"/ -->
 
   </export>
 
