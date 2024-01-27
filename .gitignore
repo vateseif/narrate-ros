@@ -163,3 +163,7 @@ cython_debug/
 devel/
 .catkin_tools/
 logs/
+
+# macOS
+.DS_Store
+.zshrc
