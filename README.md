@@ -9,24 +9,15 @@
 - (not sure) Install deps: `sudo rosdep init` (if you don't have it yet), `rosdep update`, `rosdep install --from-paths src --ignore-src -r -y`
 - Install packages in this catkin workspace with `catkin_make`
 - Source with `source devel/setup.bash`
-- Launch with `rosrun l2o_interface_mock l2o_interface_mock_script.py `
+
+# Run
+- Launch with `roslaunch l2c moveit_panda.launch` launches the panda robot, moveit, and a custom world
 
 # Useful tools
 - [Gazebo models](https://github.com/osrf/gazebo_models?tab=readme-ov-file)
 
 # Real robot connection
 Check [this](https://frankaemika.github.io/docs/getting_started.html).
-
-# Run an example
-To launch moveit and panda (franka robot) on gazebo
-```
-roslaunch panda_moveit_config demo_gazebo.launch
-```
-
-Also launch this (integration not working yet...)
-```
-roslaunch moveit_servoing pose_tracking.launch
-```
 
 # Useful resources
 - [Moveit 1 Tutorials](https://ros-planning.github.io/moveit_tutorials/doc/getting_started/getting_started.html)
