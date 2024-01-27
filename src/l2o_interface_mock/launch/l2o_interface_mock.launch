@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="l2o_interface_mock_script" pkg="l2o_interface_mock" type="l2o_interface_mock_script.py" respawn="false" output="screen">
+  </node>
+
+</launch>
