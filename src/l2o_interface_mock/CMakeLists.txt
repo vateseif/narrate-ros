@@ -3,6 +3,8 @@
 
 catkin_install_python(PROGRAMS
   scripts/move_group_python_interface_tutorial.py
+  script/robot.py
+  script/controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
