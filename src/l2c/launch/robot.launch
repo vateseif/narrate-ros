@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="robot" pkg="l2c" type="robot.py" respawn="false" output="screen">
+  </node>
+
+</launch>

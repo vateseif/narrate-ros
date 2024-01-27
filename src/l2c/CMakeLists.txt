@@ -1,10 +1,13 @@
-# project(l2o_interface_mock)
+# project(l2c)
 # cmake_minimum_required(VERSION 3.1.3)
 
+find_package(catkin REQUIRED)
+
+catkin_package()
+
 catkin_install_python(PROGRAMS
-  scripts/move_group_python_interface_tutorial.py
-  script/robot.py
-  script/controller.py
+  scripts/robot.py
+  scripts/controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
