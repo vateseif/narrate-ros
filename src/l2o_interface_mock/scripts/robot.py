@@ -85,16 +85,7 @@ class MoveGroupPythonInterfaceTutorial(object):
         """
         print(f"{ee_pose=}")
 
-        pose_goal = Pose()
-        pose_goal.position.x = ee_pose[0]
-        pose_goal.position.y = ee_pose[1]
-        pose_goal.position.z = ee_pose[2]
-        pose_goal.orientation.x = ee_pose[3]
-        pose_goal.orientation.y = ee_pose[4]
-        pose_goal.orientation.z = ee_pose[5]
-        pose_goal.orientation.w = ee_pose[6]
-
-        self.move_group.set_pose_target(pose_goal)
+        self.move_group.set_pose_target(ee_pose)
 
         ## Now, we call the planner to compute the plan and execute it.
         # `go()` returns a boolean indicating whether the planning and execution was successful.
@@ -119,7 +110,7 @@ def main():
 
 
         # Initialize the node with the name 'listener_node'
-        rospy.init_node('robot', anonymous=True)
+        #rospy.init_node('robot', anonymous=True)
         
         # Create a subscriber object that subscribes to the 'chatter' topic
         rospy.Subscriber("/pose", Pose, tutorial.go_to_pose)

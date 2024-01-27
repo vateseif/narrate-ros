@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
@@ -13,7 +13,7 @@ def talker():
     rate = rospy.Rate(10)  # 10 Hz
 
     # Example pose: position (x, y, z) and orientation in Euler angles (roll, pitch, yaw)
-    position = Point(0,3, 0.0, 0.6)  # Substitute with actual values
+    position = Point(0.3, 0.0, 0.6)  # Substitute with actual values
     quaternion = Quaternion(0., 0., 0., 1.)  # Substitute with actual values
 
     # Wait for the user to press Enter
