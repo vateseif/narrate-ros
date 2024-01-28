@@ -108,12 +108,14 @@ def main():
 
         tutorial = MoveGroupPythonInterfaceTutorial()
 
+        print(f"CURRENT POSE: {tutorial.move_group.get_current_pose()}")
+
 
         # Initialize the node with the name 'listener_node'
         #rospy.init_node('robot', anonymous=True)
         
         # Create a subscriber object that subscribes to the 'chatter' topic
-        rospy.Subscriber("/pose", Pose, tutorial.go_to_pose)
+        rospy.Subscriber("/pose", Pose, tutorial.go_to_pose, queue_size=10)
         
         # Keep python from exiting until this node is stopped
         rospy.spin()
