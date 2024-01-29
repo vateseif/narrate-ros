@@ -26,6 +26,6 @@
     <arg name="load_robot_description" value="false" />
     <!-- MoveItSimpleControllerManager provides ros_control's JointTrajectory controllers
          as well as GripperCommand actions -->
-    <arg name="moveit_controller_manager" value="ros_control" />
+    <arg name="moveit_controller_manager" value="simple" />
   </include>
 </launch>
