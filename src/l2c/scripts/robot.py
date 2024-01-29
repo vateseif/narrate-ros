@@ -95,7 +95,6 @@ class MoveGroupPythonInterfaceTutorial(object):
         # It is always good to clear your targets after planning with poses.
         self.move_group.clear_pose_targets()
 
-        current_pose = self.move_group.get_current_pose().pose
         return True
 
 def main():
