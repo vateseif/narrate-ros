@@ -1,1 +1,11 @@
-cvxpy
+tqdm==4.65.0
+ipympl
+pydantic
+do-mpc
+onnx
+openai
+asyncua
+langchain
+ipywidgets
+tiktoken
+opencv-python
