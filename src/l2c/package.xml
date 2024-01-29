@@ -32,6 +32,9 @@
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf2_eigen</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
+  
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend>
 
   <run_depend>panda_moveit_config</run_depend>
   <run_depend>franka_description</run_depend>

@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
+import os
 import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import rospy
 import moveit_commander
 import tf.transformations as tfm
-from geometry_msgs.msg import Pose, Quaternion
+from sensor_msgs.msg import JointState
+from geometry_msgs.msg import Pose, Quaternion, Twist
+ 
+from l2c.srv import GetEEState, GetEEStateResponse
 
+import numpy as np
 
 class Robot(object):
     """Robot"""
@@ -17,19 +25,53 @@ class Robot(object):
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node("robot", anonymous=True)
 
-        # init pubs and subs
-        self.pose_publisher = rospy.Publisher('/pose', Pose, queue_size=1)
-        self.target_pose_subscriber = rospy.Subscriber('/target_pose', Pose, self.go_to_pose)
+        # init subs
+        self.target_pose_sub = rospy.Subscriber('/target_pose', Pose, self.go_to_pose)
+        self.joint_sub = rospy.Subscriber("/joint_states", JointState, self.store_joint_velocities)
 
+        # init pubs
+        #self.pose_publisher = rospy.Publisher('/pose', Pose, queue_size=1)
+        self.x0_pub = rospy.Service('get_x0', GetEEState, self.get_ee_state)
 
         group_name = "panda_arm"
         self.move_group = moveit_commander.MoveGroupCommander(group_name)
+
+        self.robot = moveit_commander.RobotCommander("robot_description")
+
+        #print(self.robot.get_current_state())
+
+    def get_ee_state(self, req):
+        """ Return the end-effector state as (pose: Pose, ee_velocity:Twist)"""
+        # ee pose
+        pose = self.get_pose()
+
+        # compute ee velocity
+        jacobian = self.move_group.get_jacobian_matrix(self.move_group.get_current_joint_values())
+        
+        ee_velocity = Twist() # dim = 6
+        vel = np.dot(jacobian, self.joint_velocities)
+        ee_velocity.linear.x = vel[0]
+        ee_velocity.linear.y = vel[1]
+        ee_velocity.linear.z = vel[2]
+        ee_velocity.angular.x = vel[3]
+        ee_velocity.angular.y = vel[4]
+        ee_velocity.angular.z = vel[5] 
+
+        rospy.loginfo(pose)
+        rospy.loginfo(ee_velocity)
+
+        return GetEEStateResponse(pose, ee_velocity)
+
+    def store_joint_velocities(self, msg):
+        """ Store the velocities of the joints for later use"""
+        joint_velocities = msg.velocity
+        self.joint_velocities = np.array(joint_velocities)[:7]
 
     def go_to_pose(self, pose_displacement):
         """
         ee_pose_displacement: [x, y, z, qx, qy, qz, qw]
         """
-        print(f"{pose_displacement=}")
+        #print(f"{pose_displacement=}")
 
         
         target_pose = Pose()
@@ -60,14 +102,11 @@ class Robot(object):
         return True
     
     def get_pose(self):
+        #self.move_group.
         return self.move_group.get_current_pose().pose
     
     def run(self):
-        rate = rospy.Rate(5)
-        while not rospy.is_shutdown():
-            # publish current pose
-            self.pose_publisher.publish(self.get_pose())
-            rate.sleep()
+        rospy.spin() 
 
 if __name__ == "__main__":
     robot = Robot()
