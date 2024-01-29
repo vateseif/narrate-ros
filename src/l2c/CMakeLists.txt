@@ -8,6 +8,7 @@ catkin_package()
 catkin_install_python(PROGRAMS
   scripts/robot.py
   scripts/main.py
+  scripts/controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

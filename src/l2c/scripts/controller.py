@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config'))
+
 import rospy
+import tf.transformations
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
@@ -8,6 +15,7 @@ import do_mpc
 import numpy as np
 import casadi as ca
 from time import sleep
+from math import pi, sin
 from itertools import chain
 from typing import Dict, List, Optional, Tuple
 
@@ -39,9 +47,9 @@ class Controller:
 
     def init_node(self):
         rospy.init_node('controller', anonymous=True)
-        self.current_pose_subscriber = rospy.Subscriber('/pose', Pose, self.current_pose_callback)
+        self.current_pose_subscriber = rospy.Subscriber('/current_pose', Pose, self.set_pose)
         self.target_pose_publisher = rospy.Publisher('/target_pose', Pose, queue_size=10)
-        pass
+        
 
     def init_model(self):
         # inti do_mpc model
@@ -96,13 +104,13 @@ class Controller:
         for i, r in enumerate(self.robots_info):
             #regularization += ca.norm_2(self.x[i] - r['x0'])**2
             regularization += .4 * ca.norm_2(self.dx[i])**2
-            regularization += .4*ca.norm_2(ca.cos(self.psi[i]) - np.cos(r['euler0'][-1]))**2 # TODO 0.1 is harcoded
+            #regularization += .4*ca.norm_2(ca.cos(self.psi[i]) - np.cos(r['euler0'][-1]))**2 # TODO 0.1 is harcoded
         mterm = mterm + regularization # TODO: add psi reference like this -> 0.1*ca.norm_2(-1-ca.cos(self.psi_right))**2
         lterm = 0.4*mterm
         # state objective
         self.mpc.set_objective(mterm=mterm, lterm=lterm)
         # input objective
-        u_kwargs = {f'u{r["name"]}':1. for r in self.robots_info} | {f'u_psi{r["name"]}':1. for r in self.robots_info} 
+        u_kwargs = {**{f'u{r["name"]}':1. for r in self.robots_info}, **{f'u_psi{r["name"]}':1. for r in self.robots_info}} 
         self.mpc.set_rterm(**u_kwargs)
 
     def set_constraints(self, nlp_constraints: Optional[List[ca.SX]] = None):
@@ -162,6 +170,10 @@ class Controller:
     def set_t(self, t:float):
         """ Update the simulation time of the MPC controller"""
         self.mpc.set_uncertainty_values(t=np.array([t]))
+
+    def set_pose(self, pose):
+        # TODO: use the pose to initialize x0
+        pass
 
     def set_x0(self, observation: Dict[str, np.ndarray]):
         x0 = []
@@ -224,14 +236,27 @@ class Controller:
             gamma_rotation = [-self.pose[i][4] * 1.5]  # P control for angle around y axis # TODO: 1. is a hardcoded gain
             psi_rotation = [u0[4*i+3]]            # rotation control
             """
-            action.append(np.concatenate((ee_displacement, theta_rotation, gamma_rotation, psi_rotation)))
+            #action.append(np.concatenate((ee_displacement, theta_rotation, gamma_rotation, psi_rotation)))
         
         return action
 
     def step(self):
+
+        t = rospy.Time.now().to_sec()
+        euler_displacement = (0., 0., 0.)
+        position_displacement = Point(0.0, 0.0, 0.1*sin(t))
+        quaternion_displacement = Quaternion(*tf.transformations.quaternion_from_euler(*euler_displacement))
+        
+        pose_displacement = Pose(position_displacement, quaternion_displacement)
+
+        self.target_pose_publisher.publish(pose_displacement)
+        rospy.loginfo(pose_displacement)
+
+        """
         if not self.mpc.flags['setup']:
             return [np.zeros(6) for i in range(len(self.robots_info))]  # TODO 6 is hard-coded here
         return self._solve()
+        """
     
     def apply_gpt_message(self, optimization: Optimization, observation: Dict[str, np.ndarray]) -> None:
         # init mpc newly
@@ -256,7 +281,17 @@ class Controller:
         self.mpc.setup()
         self.mpc.set_initial_guess()
         return
+    
+
+    def run(self):
+        rate = rospy.Rate(5)
+        while not rospy.is_shutdown():
+            # publish current pose
+            self.step()
+            rate.sleep()
 
 
 
-
+if __name__ == "__main__":
+    controller = Controller()
+    controller.run()
