@@ -8,7 +8,7 @@ import rospy
 import moveit_commander
 import tf.transformations as tfm
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Pose, Quaternion, Twist
+from geometry_msgs.msg import Quaternion, TwistStamped, PoseStamped, Pose
  
 from l2c.srv import GetEEState, GetEEStateResponse
 
@@ -26,7 +26,7 @@ class Robot(object):
         rospy.init_node("robot", anonymous=True)
 
         # init subs
-        self.target_pose_sub = rospy.Subscriber('/target_pose', Pose, self.go_to_pose)
+        self.target_pose_sub = rospy.Subscriber('/target_pose', PoseStamped, self.go_to_pose)
         self.joint_sub = rospy.Subscriber("/joint_states", JointState, self.store_joint_velocities)
 
         # init pubs
@@ -48,14 +48,15 @@ class Robot(object):
         # compute ee velocity
         jacobian = self.move_group.get_jacobian_matrix(self.move_group.get_current_joint_values())
         
-        ee_velocity = Twist() # dim = 6
+        ee_velocity = TwistStamped() # dim = 6
         vel = np.dot(jacobian, self.joint_velocities)
-        ee_velocity.linear.x = vel[0]
-        ee_velocity.linear.y = vel[1]
-        ee_velocity.linear.z = vel[2]
-        ee_velocity.angular.x = vel[3]
-        ee_velocity.angular.y = vel[4]
-        ee_velocity.angular.z = vel[5] 
+        ee_velocity.header.stamp = rospy.Time.now()
+        ee_velocity.twist.linear.x = vel[0]
+        ee_velocity.twist.linear.y = vel[1]
+        ee_velocity.twist.linear.z = vel[2]
+        ee_velocity.twist.angular.x = vel[3]
+        ee_velocity.twist.angular.y = vel[4]
+        ee_velocity.twist.angular.z = vel[5] 
 
         rospy.loginfo(pose)
         rospy.loginfo(ee_velocity)
@@ -72,7 +73,7 @@ class Robot(object):
         ee_pose_displacement: [x, y, z, qx, qy, qz, qw]
         """
         #print(f"{pose_displacement=}")
-
+        pose_displacement = pose_displacement.pose
         
         target_pose = Pose()
         current_pose = self.get_pose()
@@ -103,7 +104,7 @@ class Robot(object):
     
     def get_pose(self):
         #self.move_group.
-        return self.move_group.get_current_pose().pose
+        return self.move_group.get_current_pose()
     
     def run(self):
         rospy.spin() 

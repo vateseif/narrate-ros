@@ -7,9 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 import rospy
 import tf.transformations
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
 from l2c.srv import GetEEState
 
@@ -54,7 +52,7 @@ class Controller:
         # subs
         self.get_x0 = rospy.ServiceProxy('get_x0', GetEEState)
 
-        self.target_pose_publisher = rospy.Publisher('/target_pose', Pose, queue_size=10)
+        self.target_pose_publisher = rospy.Publisher('/target_pose', PoseStamped, queue_size=10)
         
 
     def init_model(self):
@@ -250,8 +248,11 @@ class Controller:
         quaternion_displacement = Quaternion(*tf.transformations.quaternion_from_euler(*euler_displacement))
         
         pose_displacement = Pose(position_displacement, quaternion_displacement)
+        pose_stamped = PoseStamped()
+        pose_stamped.header.stamp = rospy.Time.now()
+        pose_stamped.pose = pose_displacement
 
-        self.target_pose_publisher.publish(pose_displacement)
+        self.target_pose_publisher.publish(pose_stamped)
 
         """
         if not self.mpc.flags['setup']:
