@@ -7,9 +7,9 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 import rospy
 import tf.transformations
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
+from geometry_msgs.msg import Point, Quaternion, Pose, Twist, PoseStamped, TwistStamped 
+from message_filters import Subscriber, ApproximateTimeSynchronizer
 
-from l2c.srv import GetEEState
 
 
 import do_mpc
@@ -31,14 +31,14 @@ class Controller:
         # init info of robots and objects
         self.robots_info, self.objects_info = env_info
 
-        # init ros node
-        self.init_node()
-
         # init model dynamics
         self.init_model()
 
-        # init controller
+        # init controllerf
         self.init_controller()
+
+        # init ros node
+        self.init_node()
 
         # init variables and expressions
         self.init_expressions()
@@ -48,11 +48,19 @@ class Controller:
 
     def init_node(self):
         rospy.init_node('controller', anonymous=True)
-        rospy.wait_for_service('get_x0') # wait for service to be available
+        #rospy.wait_for_service('get_x0') # wait for service to be available
         # subs
         #self.get_x0 = rospy.ServiceProxy('get_x0', GetEEState)
+        self.ee_pose_sub = Subscriber('/ee_pose', PoseStamped)
+        self.ee_twist_sub = Subscriber('/ee_twist', TwistStamped)
+        self.synced_subs = ApproximateTimeSynchronizer([self.ee_pose_sub, self.ee_twist_sub],
+                                                       queue_size=1,
+                                                       slop=0.2, # TODO: set this param in the config
+                                                       allow_headerless=False)
         
-        self.target_pose_publisher = rospy.Publisher('/target_pose', PoseStamped, queue_size=10)
+        self.synced_subs.registerCallback(self.set_x0)
+        
+        self.target_pose_publisher = rospy.Publisher('/target_pose', PoseStamped, queue_size=1)
         
 
     def init_model(self):
@@ -103,7 +111,7 @@ class Controller:
     def set_objective(self, mterm: ca.SX = ca.DM([[0]])): # TODO: not sure if ca.SX is the right one
         # objective terms
         regularization = 0
-        #regularization += ca.norm_2(self.x[i] - r['x0'])**2
+        regularization += ca.norm_2(self.x[2] - 0.2)**2 # TODO: remove this, it's just for testing
         regularization += .4 * ca.norm_2(self.dx)**2
         #regularization += .4*ca.norm_2(ca.cos(self.psi[i]) - np.cos(r['euler0'][-1]))**2 # TODO 0.1 is harcoded
         mterm = mterm + regularization # TODO: add psi reference like this -> 0.1*ca.norm_2(-1-ca.cos(self.psi_right))**2
@@ -171,22 +179,18 @@ class Controller:
         """ Update the simulation time of the MPC controller"""
         self.mpc.set_uncertainty_values(t=np.array([t]))
 
-    def set_pose(self, pose):
-        # TODO: use the pose to initialize x0
-        pass
+    def set_x0(self, ee_pose:PoseStamped, ee_twist:TwistStamped):
+        
+        # position kinematics
+        x = np.array([ee_pose.pose.position.x, ee_pose.pose.position.y, ee_pose.pose.position.z])
+        dx = np.array([ee_twist.twist.linear.x, ee_twist.twist.linear.y, ee_twist.twist.linear.z])
+        # angular kinematics
+        quaternion = [ee_pose.pose.orientation.x, ee_pose.pose.orientation.y, ee_pose.pose.orientation.z, ee_pose.pose.orientation.w]
+        euler = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
+        psi = np.array([euler[2]])
+        # set mpc states
+        self.mpc.x0 = np.concatenate((x, psi, dx, [0])) # TODO: dpsi harcoded to 0. maybe remove completely rotation control
 
-    def set_x0(self, observation: Dict[str, np.ndarray]):
-        x0 = []
-        self.pose = []
-        #for r in self.robots_info: # TODO set names instead of robot_0 in panda
-        obs = observation['robot'] # observation of each robot
-        x = obs[:3]
-        psi = np.array([obs[5]])
-        dx = obs[6:9]
-        x0 = np.concatenate((x, dx)) # TODO dpsi is harcoded to 0 here
-        self.pose = obs[:6]
-        # set x0 in MPC
-        self.mpc.x0 = x0
 
     def init_states(self, observation:Dict[str, np.ndarray], t:float):
         """ Set the values the MPC initial states and variables """
@@ -242,7 +246,13 @@ class Controller:
 
     def step(self):
 
+        
+
         t = rospy.Time.now().to_sec()
+        rospy.loginfo(t)
+        rospy.loginfo(self._solve())
+
+        """
         euler_displacement = (0., 0., 0.)
         position_displacement = Point(0.0, 0.0, 0.1*sin(t))
         quaternion_displacement = Quaternion(*tf.transformations.quaternion_from_euler(*euler_displacement))
@@ -253,6 +263,7 @@ class Controller:
         pose_stamped.pose = pose_displacement
 
         self.target_pose_publisher.publish(pose_stamped)
+        """
 
         """
         if not self.mpc.flags['setup']:
@@ -286,11 +297,9 @@ class Controller:
     
 
     def run(self):
-        rate = rospy.Rate(0.2)
+        rate = rospy.Rate(5)
         while not rospy.is_shutdown():
             # publish current pose
-            x0 = self.get_x0()
-            rospy.loginfo(x0)
             self.step()
             rate.sleep()
 
