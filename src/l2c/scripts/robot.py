@@ -6,6 +6,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 import rospy
 import moveit_commander
+import actionlib
+import franka_gripper.msg
 import tf.transformations as tfm
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Quaternion, TwistStamped, PoseStamped, Pose
@@ -105,6 +107,57 @@ class Robot(object):
     def get_pose(self):
         #self.move_group.
         return self.move_group.get_current_pose()
+    
+    def gripper_grasp(self, width=0.05):
+        """
+        Python implementation of
+        rostopic pub --once /franka_gripper/grasp/goal \
+             franka_gripper/GraspActionGoal \
+             "goal: { width: 0.03, epsilon:{ inner: 0.005, outer: 0.005 }, speed: 0.1, force: 5.0}"
+        """
+        # Create a goal message object for the action server.
+        goal = franka_gripper.msg.GraspActionGoal()
+
+        # Create a goal object for the action server.
+        goal.goal.width = width
+        goal.goal.epsilon.inner = 0.005
+        goal.goal.epsilon.outer = 0.005
+        goal.goal.speed = 0.1
+        goal.goal.force = 5.0
+
+        # Send the goal to the action server.
+        client = actionlib.SimpleActionClient("/franka_gripper/grasp", franka_gripper.msg.GraspAction)
+        client.wait_for_server()
+        client.send_goal(goal.goal)
+
+        # Wait for the action server to complete the order.
+        client.wait_for_result()
+
+        # Print the result of executing the action
+        return client.get_result()
+
+    def gripper_open(self,):
+        """
+        Python implementation of
+        rostopic pub --once /franka_gripper/move/goal franka_gripper/MoveActionGoal "goal: { width: 0.08, speed: 0.1 }"
+        """
+        # Create a goal message object for the action server.
+        goal = franka_gripper.msg.MoveActionGoal()
+
+        # Create a goal object for the action server.
+        goal.goal.width = 0.08
+        goal.goal.speed = 0.1
+
+        # Send the goal to the action server.
+        client = actionlib.SimpleActionClient("/franka_gripper/move", franka_gripper.msg.MoveAction)
+        client.wait_for_server()
+        client.send_goal(goal.goal)
+
+        # Wait for the action server to complete the order.
+        client.wait_for_result()
+
+        # Print the result of executing the action
+        return client.get_result()
     
     def run(self):
         rospy.spin() 
