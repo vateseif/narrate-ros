@@ -25,3 +25,5 @@ Check [this](https://frankaemika.github.io/docs/getting_started.html).
 # Useful resources
 - [Moveit 1 Tutorials](https://ros-planning.github.io/moveit_tutorials/doc/getting_started/getting_started.html)
 - [Moveit 1 Python Interface Tutorial](https://ros-planning.github.io/moveit_tutorials/doc/move_group_python_interface/move_group_python_interface_tutorial.html)
+- [Aruco marker generator](https://chev.me/arucogen/)
+- [Aruco example cv4.8.0](https://github.com/Menginventor/aruco_example_cv_4.8.0/tree/main)
