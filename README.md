@@ -6,6 +6,7 @@
 - Install [MoveIt](https://moveit.ros.org/install/) binary (apt)
 - Install [MoveIt](https://moveit.ros.org/install/source/) from source and `catkin build panda_moveit_config`
 - Setup the gazebo kinect model by copy-pasting the `kinect` folder you find in `src/l2c/gazebo/models` to `~/.gazebo/models/`
+- Install [Pinocchio](https://stack-of-tasks.github.io/pinocchio/download.html). Make sure to specify the right python version when changing PATH in the `.bashrc`
 
 - (not sure) Install deps: `sudo rosdep init` (if you don't have it yet), `rosdep update`, `rosdep install --from-paths src --ignore-src -r -y`
 - Install packages in this catkin workspace with `catkin_make`
