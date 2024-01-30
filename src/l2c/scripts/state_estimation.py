@@ -6,7 +6,6 @@ from geometry_msgs.msg import Pose, Twist, PoseStamped, TwistStamped
 
 import numpy as np
 import pinocchio as pin
-#from pinocchio.utils import se3ToXYZQUAT
 
 class FrankaEEFInfoNode:
     def __init__(self):
