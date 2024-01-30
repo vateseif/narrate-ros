@@ -5,6 +5,7 @@
 - Set up [real-time kernel for Franka](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel) on the workstation PC
 - Install [MoveIt](https://moveit.ros.org/install/) binary (apt)
 - Install [MoveIt](https://moveit.ros.org/install/source/) from source and `catkin build panda_moveit_config`
+- Setup the gazebo kinect model by copy-pasting the `kinect` folder you find in `src/l2c/gazebo/models` to `~/.gazebo/models/`
 
 - (not sure) Install deps: `sudo rosdep init` (if you don't have it yet), `rosdep update`, `rosdep install --from-paths src --ignore-src -r -y`
 - Install packages in this catkin workspace with `catkin_make`
