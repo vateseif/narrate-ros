@@ -2,27 +2,26 @@
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config'))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config'))
 
 import rospy
 import tf.transformations
-from geometry_msgs.msg import Point, Quaternion, Pose, Twist, PoseStamped, TwistStamped 
 from message_filters import Subscriber, ApproximateTimeSynchronizer
-
+from geometry_msgs.msg import Twist, Transform, PoseStamped, TwistStamped
+from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 
 
 import do_mpc
 import numpy as np
 import casadi as ca
-from time import sleep
-from math import pi, sin
 from itertools import chain
 from typing import Dict, List, Optional, Tuple
 
+from scripts.llm import Optimization
+from config.config import ControllerConfig
 
-from llm import Optimization
-from config import ControllerConfig
+
 
 class Controller:
     def __init__(self, env_info:Tuple[List]=([{"name":"robot"}], [{"name":"cube"}]), cfg=ControllerConfig) -> None:
@@ -43,6 +42,12 @@ class Controller:
         # init variables and expressions
         self.init_expressions()
 
+        # home ee position TODO: put in config
+        self.home_position = []
+        # home ee orientation TODO: put in config
+        self.home_quaternion = [0.924, -0.383, 0., 0.]
+
+
         # gripper fingers offset for constraints 
         self.gripper_offsets = [np.array([0., -0.048, 0.]), np.array([0., 0.048, 0.]), np.array([0., 0., 0.048])]
 
@@ -50,17 +55,16 @@ class Controller:
         rospy.init_node('controller', anonymous=True)
         #rospy.wait_for_service('get_x0') # wait for service to be available
         # subs
-        #self.get_x0 = rospy.ServiceProxy('get_x0', GetEEState)
         self.ee_pose_sub = Subscriber('/ee_pose', PoseStamped)
         self.ee_twist_sub = Subscriber('/ee_twist', TwistStamped)
         self.synced_subs = ApproximateTimeSynchronizer([self.ee_pose_sub, self.ee_twist_sub],
                                                        queue_size=1,
                                                        slop=0.2, # TODO: set this param in the config
                                                        allow_headerless=False)
-        
         self.synced_subs.registerCallback(self.set_x0)
         
-        self.target_pose_publisher = rospy.Publisher('/target_pose', PoseStamped, queue_size=1)
+        # pubs
+        self.ee_trajectory_pub = rospy.Publisher('/ee_trajectory', MultiDOFJointTrajectory, queue_size=1)
         
 
     def init_model(self):
@@ -82,16 +86,8 @@ class Controller:
         
         # gripper pose [x, y, z, theta, gamma, psi]       
         self.pose = []    
-        
-        """ State and input variables """
-        #self.x = []       # gripper position (x,y,z)
-        #self.psi = []     # gripper psi (rotation around z axis)
-        #self.dx = []      # gripper velocity (vx, vy, vz)
-        #self.dpsi = []    # gripper rotational speed
-        #self.u = []       # gripper control (=velocity)
-        #self.u_psi = []   # gripper rotation control (=rotational velocity)
-        
-        
+
+                
         # position (x, y, z)
         self.x = self.model.set_variable(var_type='_x', var_name='x', shape=(self.cfg.nx,1))
         self.psi = self.model.set_variable(var_type='_x', var_name='psi', shape=(1,1))
@@ -180,7 +176,6 @@ class Controller:
         self.mpc.set_uncertainty_values(t=np.array([t]))
 
     def set_x0(self, ee_pose:PoseStamped, ee_twist:TwistStamped):
-        
         # position kinematics
         x = np.array([ee_pose.pose.position.x, ee_pose.pose.position.y, ee_pose.pose.position.z])
         dx = np.array([ee_twist.twist.linear.x, ee_twist.twist.linear.y, ee_twist.twist.linear.z])
@@ -226,50 +221,50 @@ class Controller:
         evaluated_code = eval(code_str, eval_variables)
         return evaluated_code
 
-    def _solve(self) -> List[np.ndarray]:
-        """ Returns a list of controls, 1 for each robot """
-        # solve mpc at state x0
-        u0 = self.mpc.make_step(self.mpc.x0).squeeze()
-        # compute action for each robot
-        action = []
-        #for i in range(len(self.robots_info)):
-        ee_displacement = u0[0:3]     # positon control
-        """
-        theta_regularized = self.pose[i][3] if self.pose[i][3]>=0 else self.pose[i][3] + 2*np.pi 
-        theta_rotation = [(np.pi - theta_regularized)*1.5]
-        gamma_rotation = [-self.pose[i][4] * 1.5]  # P control for angle around y axis # TODO: 1. is a hardcoded gain
-        psi_rotation = [u0[4*i+3]]            # rotation control
-        """
-        #action = np.concatenate((ee_displacement, theta_rotation, gamma_rotation, psi_rotation))
-        
-        return u0
+    
+    def retrieve_trajectory(self):
+        # retrieve state trajectory
+        trajectory = MultiDOFJointTrajectory()
+        trajectory.header.stamp = rospy.Time.now()
+        trajectory.joint_names = ["end_effector"]  # Replace with your actual joint/frame names
+
+        for i in range(len(self.mpc.opt_x_num['_x', :, 0, 0])):
+            transform = Transform()
+            transform.translation.x = self.mpc.opt_x_num['_x', :, 0, 0][i].toarray()[0].squeeze()
+            transform.translation.y = self.mpc.opt_x_num['_x', :, 0, 0][i].toarray()[1].squeeze()
+            transform.translation.z = self.mpc.opt_x_num['_x', :, 0, 0][i].toarray()[2].squeeze()
+            transform.rotation.x = self.home_quaternion[0]
+            transform.rotation.y = self.home_quaternion[1]
+            transform.rotation.z = self.home_quaternion[2]
+            transform.rotation.w = self.home_quaternion[3]
+
+            # Create Twist for velocity
+            twist = Twist()
+            twist.linear.x = self.mpc.opt_x_num['_x', :, 0, 0][i].toarray()[4].squeeze()
+            twist.linear.y = self.mpc.opt_x_num['_x', :, 0, 0][i].toarray()[5].squeeze()
+            twist.linear.z = self.mpc.opt_x_num['_x', :, 0, 0][i].toarray()[6].squeeze()
+            twist.angular.x = 0.
+            twist.angular.y = 0.
+            twist.angular.z = 0.
+
+            # Build trajectory point
+            traj_point = MultiDOFJointTrajectoryPoint()
+            traj_point.transforms = [transform]
+            traj_point.velocities = [twist]
+            traj_point.time_from_start = rospy.Duration(self.cfg.dt * i, 0)
+
+            # append to trajectory points
+            trajectory.points.append(traj_point)
+
+        return trajectory
 
     def step(self):
+        # run optimization
+        _ = self.mpc.make_step(self.mpc.x0).squeeze()
+        # retrieve and publish trajecotry
+        trajectory = self.retrieve_trajectory()
+        self.ee_trajectory_pub.publish(trajectory)
 
-        
-
-        t = rospy.Time.now().to_sec()
-        rospy.loginfo(t)
-        rospy.loginfo(self._solve())
-
-        """
-        euler_displacement = (0., 0., 0.)
-        position_displacement = Point(0.0, 0.0, 0.1*sin(t))
-        quaternion_displacement = Quaternion(*tf.transformations.quaternion_from_euler(*euler_displacement))
-        
-        pose_displacement = Pose(position_displacement, quaternion_displacement)
-        pose_stamped = PoseStamped()
-        pose_stamped.header.stamp = rospy.Time.now()
-        pose_stamped.pose = pose_displacement
-
-        self.target_pose_publisher.publish(pose_stamped)
-        """
-
-        """
-        if not self.mpc.flags['setup']:
-            return [np.zeros(6) for i in range(len(self.robots_info))]  # TODO 6 is hard-coded here
-        return self._solve()
-        """
     
     def apply_gpt_message(self, optimization: Optimization, observation: Dict[str, np.ndarray]) -> None:
         # init mpc newly
@@ -307,8 +302,4 @@ class Controller:
 
 if __name__ == "__main__":
     controller = Controller()
-    #controller.set_x0({
-    #    "robot": np.zeros((12,))
-    #})
-    #print(controller._solve())
     controller.run()
