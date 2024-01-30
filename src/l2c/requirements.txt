@@ -9,3 +9,4 @@ langchain
 ipywidgets
 tiktoken
 opencv-python
+langchain-openai
