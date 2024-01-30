@@ -50,8 +50,8 @@ class Controller:
         rospy.init_node('controller', anonymous=True)
         rospy.wait_for_service('get_x0') # wait for service to be available
         # subs
-        self.get_x0 = rospy.ServiceProxy('get_x0', GetEEState)
-
+        #self.get_x0 = rospy.ServiceProxy('get_x0', GetEEState)
+        
         self.target_pose_publisher = rospy.Publisher('/target_pose', PoseStamped, queue_size=10)
         
 
