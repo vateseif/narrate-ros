@@ -31,7 +31,7 @@ class FrankaEEFInfoNode:
         # Compute the forward kinematics to get the end effector's pose
         pin.forwardKinematics(self.robot_model, self.robot_data, q)
         #eef_frame_id = self.robot_model.getFrameId('panda_link7') # Check your URDF for the correct end effector link name
-        eef_pose = self.robot_data.oMi[7]
+        eef_pose = self.robot_data.oMi[7] # TODO: set 7 (last link index) into the config
         #print(eef_pose)
 
         # Convert the pose to a ROS Pose message
@@ -41,7 +41,7 @@ class FrankaEEFInfoNode:
         pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = (xyz_quat[3], xyz_quat[4], xyz_quat[5], xyz_quat[6])
 
         # Compute the Jacobian and use it to calculate the end effector's velocity
-        J = pin.computeFrameJacobian(self.robot_model, self.robot_data, q, 7)
+        J = pin.computeFrameJacobian(self.robot_model, self.robot_data, q, 7) # TODO: set 7 (last link index) into the config
         v_eef = J.dot(v)  # End effector velocity in the local frame
 
         # Convert the velocity to a ROS Twist message
@@ -61,9 +61,6 @@ class FrankaEEFInfoNode:
         # publish
         self.ee_pose_publisher.publish(pose_msg)
         self.ee_velocity_publisher.publish(twist_msg)
-
-        rospy.loginfo(pose_msg)
-        rospy.loginfo(twist_msg)
 
 if __name__ == '__main__':
     node = FrankaEEFInfoNode()
