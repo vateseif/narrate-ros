@@ -37,6 +37,7 @@ catkin_package(
 )
 
 catkin_install_python(PROGRAMS
+  scripts/llm.py
   scripts/robot.py
   scripts/main.py
   scripts/controller.py
