@@ -12,6 +12,8 @@
 
 # Run
 - Launch with `roslaunch l2c moveit_panda.launch` launches the panda robot, moveit, and a custom world
+- `rosrun l2c state_estimation.py`
+- `rosrun l2c controller.py`
 
 # Useful tools
 - [Gazebo models](https://github.com/osrf/gazebo_models?tab=readme-ov-file)
