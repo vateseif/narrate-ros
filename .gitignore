@@ -167,3 +167,6 @@ logs/
 # macOS
 .DS_Store
 .zshrc
+
+# keys
+*.key
