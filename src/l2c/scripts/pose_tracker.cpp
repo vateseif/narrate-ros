@@ -79,9 +79,7 @@ int main(int argc, char **argv) {
   while (ros::ok()) {
     // Modify the pose target a little bit each cycle
     // This is a dynamic pose target
-    ROS_INFO("running");
-    tracker.moveToPose(lin_tol, rot_tol, 0.1 /* target pose timeout */);
-    loop_rate.sleep();
+    tracker.moveToPose(lin_tol, rot_tol, 1/50.0 /* target pose timeout */);
   }
 
   // Make sure the tracker is stopped and clean up

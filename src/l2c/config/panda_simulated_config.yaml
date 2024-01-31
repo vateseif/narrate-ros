@@ -33,7 +33,7 @@ planning_frame: panda_link0  # The MoveIt planning frame. Often 'base_link' or '
 
 ## Other frames
 ee_frame_name: panda_hand  # The name of the end effector link, used to return the EE pose
-robot_link_command_frame:  panda_link0  # commands must be given in the frame of a robot link. Usually either the base or end effector
+robot_link_command_frame:  panda_hand  # commands must be given in the frame of a robot link. Usually either the base or end effector
 
 ## Stopping behaviour
 incoming_command_timeout:  0.1  # Stop servoing if X seconds elapse without a new command
