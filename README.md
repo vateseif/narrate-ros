@@ -14,8 +14,8 @@
 
 # Run
 - Launch with `roslaunch l2c moveit_panda.launch` launches the panda robot, moveit, and a custom world
-- `rosrun l2c state_estimation.py`
-- `rosrun l2c controller.py`
+- `rosrun l2c state_estimation.py` to launch pose tracker
+- `rosrun l2c controller.py` to launch trajectory follower (publishes hardcoded '/target_pose')
 
 Note: to be able to add the aruco cubes to the simulation, clone [this](https://github.com/antonioarbues/gazebo_aruco_box) repo, follow the readme, and then launch:
 ```
