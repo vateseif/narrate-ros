@@ -1,0 +1,8 @@
+ee_frame: "panda_hand"
+base_frame: "panda_link0"
+distance_resolution: 0.02
+angle_resolution: 0.2
+max_time_delay: 0.1
+frequency: 5
+vis_frequency: 10
+dummy_trajectory: True
