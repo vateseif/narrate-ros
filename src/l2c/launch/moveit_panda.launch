@@ -27,5 +27,11 @@
     <!-- MoveItSimpleControllerManager provides ros_control's JointTrajectory controllers
          as well as GripperCommand actions -->
     <arg name="moveit_controller_manager" value="simple" />
+    <arg name="use_rviz" value="false" />
+      <!-- Do not run rviz -->
   </include>
+
+  <!-- rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find l2c)/config/rviz_setup.rviz" required="false" output="screen" />
+
 </launch>
