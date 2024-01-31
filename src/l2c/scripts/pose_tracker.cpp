@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     // Modify the pose target a little bit each cycle
     // This is a dynamic pose target
     ROS_INFO("running");
-    tracker.moveToPose(lin_tol, rot_tol, 10 /* target pose timeout */);
+    tracker.moveToPose(lin_tol, rot_tol, 0.1 /* target pose timeout */);
     loop_rate.sleep();
   }
 

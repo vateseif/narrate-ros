@@ -12,7 +12,9 @@
 - Source with `source devel/setup.bash`
 
 # Run
-- Launch with `roslaunch l2c moveit_panda.launch` launches the panda robot, moveit, and a custom world
+- `roslaunch l2c moveit_panda.launch` to launch the panda robot
+- `roslaunch l2c pose_tracker.launch` to launch pose tracker
+- `rosrun l2c trajectory_follower.py` to launch trajectory follower (publishes hardcoded '/target_pose')
 
 # Useful tools
 - [Gazebo models](https://github.com/osrf/gazebo_models?tab=readme-ov-file)
