@@ -5,7 +5,7 @@
 
   <!-- Panda options -->
   <arg name="load_gripper" default="true" />
-  <arg name="transmission" default="effort" />
+  <arg name="transmission" default="position" />
 
   <!-- Gazebo options -->
   <arg name="gazebo_gui" default="true" doc="Start Gazebo GUI"/>

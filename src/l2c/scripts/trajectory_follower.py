@@ -33,8 +33,9 @@ class TrajectoryFollower:
         # TODO
         pose_msg = PoseStamped()
         pose_msg.header.stamp = rospy.Time.now()
+        pose_msg.header.frame_id = 'panda_link0'
 
-        pose_msg.pose.position.x = 0.300
+        pose_msg.pose.position.x = 0.500
         pose_msg.pose.position.y = 0.000
         pose_msg.pose.position.z = 0.300
         pose_msg.pose.orientation.x = 0.924

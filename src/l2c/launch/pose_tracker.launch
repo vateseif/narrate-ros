@@ -8,6 +8,7 @@
   </node>
 
   <node name="pose_tracker" pkg="l2c" type="pose_tracker" output="screen">
+    <remap from="~target_pose" to="/target_pose" />
     <rosparam command="load" file="$(arg config)" />
     <rosparam command="load" file="$(find l2c)/config/pose_tracking_settings.yaml" />
   </node>
