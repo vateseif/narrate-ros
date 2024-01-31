@@ -9,14 +9,13 @@ import rospy
 from typing import List
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
-#from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, AIMessage
 from langchain.prompts.chat import SystemMessagePromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 
 from config.config import LLMConfig
 
-# GPT4 api key.
+# GPT api key
 os.environ["OPENAI_API_KEY"] = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'../keys/openai.key'), 'r').readline().rstrip()
 
 
@@ -72,9 +71,9 @@ class LLM():
 			# TODO: mock
 			pass
 		self.messages.append(model_message)
-		#print(f"\33[92m {model_message.content} \033[0m \n")
+		print(f"\33[92m {model_message.content} \033[0m \n")
 		#return self.parser.parse(model_message.content)
-		return model_message.content if self.output is None else self.parser.parse(model_message.content) 
+		return model_message.content if self.output is None else self.parser.parse(model_message.content)
 	
 
 	def run(self):
