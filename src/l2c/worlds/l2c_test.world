@@ -327,16 +327,16 @@
         </link>
       </model>
       <model name='kinect'>
-        <pose>0.732945 -0.642121 0.055404 0 -0 2.13813</pose>
+        <pose>0.78 -0.72 0.81 0 0.54 2.1</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>0.732945 -0.642121 0.055404 0 -0 2.13813</pose>
+          <pose>0.78 -0.72 0.81 0 0.54 2.1</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='box_red'>
+      <model name='<box_red>'>
         <pose>0.55 0.0 0.5 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -388,7 +388,7 @@
       </camera>
     </gui>
     <model name='kinect'>
-      <pose>0.732945 -0.642121 0.036 0 -0 0</pose>
+      <pose>0.78 -0.72 0.81 0 0.54 2.1</pose>
       <link name='link'>
         <inertial>
           <mass>0.1</mass>

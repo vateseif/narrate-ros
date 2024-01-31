@@ -16,6 +16,11 @@
 - `rosrun l2c state_estimation.py`
 - `rosrun l2c controller.py`
 
+Note: to be able to add the aruco cubes to the simulation, clone [this](https://github.com/antonioarbues/gazebo_aruco_box) repo, follow the readme, and then launch:
+```
+GAZEBO_MODEL_PATH="/path/to/gazebo_aruco_box" roslaunch l2c moveit_panda.launch
+```
+
 # Useful tools
 - [Gazebo models](https://github.com/osrf/gazebo_models?tab=readme-ov-file)
 
