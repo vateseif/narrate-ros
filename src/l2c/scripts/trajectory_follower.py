@@ -37,7 +37,7 @@ class TrajectoryFollower:
         pose_msg.pose.position.x = 0.300
         pose_msg.pose.position.y = 0.000
         pose_msg.pose.position.z = 0.300
-        pose_msg.pose.orientation.x = 0.924, 
+        pose_msg.pose.orientation.x = 0.924
         pose_msg.pose.orientation.y = -0.383 
         pose_msg.pose.orientation.z = 0.
         pose_msg.pose.orientation.w = 0.
