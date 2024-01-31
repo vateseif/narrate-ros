@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import rospy
 import tf.transformations
+from std_msgs.msg import String
 from message_filters import Subscriber, ApproximateTimeSynchronizer
 from geometry_msgs.msg import Twist, Transform, PoseStamped, TwistStamped
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
@@ -18,7 +19,8 @@ import casadi as ca
 from itertools import chain
 from typing import Dict, List, Optional, Tuple
 
-from scripts.llm import Optimization
+
+from scripts.llm import LLM, Optimization
 from config.config import ControllerConfig
 
 
@@ -43,7 +45,7 @@ class Controller:
         self.init_expressions()
 
         # home ee position TODO: put in config
-        self.home_position = []
+        self.home_position = None
         # home ee orientation TODO: put in config
         self.home_quaternion = [0.924, -0.383, 0., 0.]
 
@@ -52,8 +54,8 @@ class Controller:
         self.gripper_offsets = [np.array([0., -0.048, 0.]), np.array([0., 0.048, 0.]), np.array([0., 0., 0.048])]
 
     def init_node(self):
+        # node
         rospy.init_node('controller', anonymous=True)
-        #rospy.wait_for_service('get_x0') # wait for service to be available
         # subs
         self.ee_pose_sub = Subscriber('/ee_pose', PoseStamped)
         self.ee_twist_sub = Subscriber('/ee_twist', TwistStamped)
@@ -61,8 +63,9 @@ class Controller:
                                                        queue_size=1,
                                                        slop=0.2, # TODO: set this param in the config
                                                        allow_headerless=False)
-        self.synced_subs.registerCallback(self.set_x0)
-        
+        self.synced_subs.registerCallback(self.set_x0) # sync subs 
+        self.TP_message_sub = rospy.Subscriber('/TP_message', String, self.TP_callback, queue_size=1)
+        self.OD_message_sub = rospy.Subscriber('/OD_message', String, self.OD_callback, queue_size=1)
         # pubs
         self.ee_trajectory_pub = rospy.Publisher('/ee_trajectory', MultiDOFJointTrajectory, queue_size=1)
         
@@ -184,6 +187,7 @@ class Controller:
         euler = tf.transformations.euler_from_quaternion(quaternion, axes='sxyz')
         psi = np.array([euler[2]])
         # set mpc states
+        self.home_position = x
         self.mpc.x0 = np.concatenate((x, psi, dx, [0])) # TODO: dpsi harcoded to 0. maybe remove completely rotation control
 
 
@@ -204,12 +208,12 @@ class Controller:
         self.init_states(observation, t)
         return
 
-    def _eval(self, code_str: str, observation: Dict[str, np.ndarray], offset=np.zeros(3)):
+    def _eval(self, code_str: str, offset=np.zeros(3)):
         #TODO the offset is still harcoded
         # put together variables for python code evaluation:    
         
         # initial state of robots before applying any action
-        x0 = {'x0': observation['robot'][:3]} 
+        x0 = {'x0': self.home_position} 
         # robot variable states (decision variables in the optimization problem)
         robots_states = {}
         #for i, r in enumerate(self.robots_info):
@@ -272,15 +276,15 @@ class Controller:
         # apply constraint function
         # NOTE use 1e-6 when doing task L 
         regulatization = 0#1 * ca.norm_2(self.dpsi)**2 #+ 0.1 * ca.norm_2(self.psi - np.pi/2)**2
-        self.set_objective(self._eval(optimization.objective, observation) + regulatization)
+        self.set_objective(self._eval(optimization.objective) + regulatization)
         # set base constraint functions
         constraints = []
         # positive equality constraint
-        constraints += [self._eval(c, observation) for c in optimization.equality_constraints]
+        constraints += [self._eval(c) for c in optimization.equality_constraints]
         # negative equality constraint
-        constraints += [-self._eval(c, observation) for c in optimization.equality_constraints]
+        constraints += [-self._eval(c) for c in optimization.equality_constraints]
         # inequality constraints
-        inequality_constraints = [[*map(lambda const: self._eval(c, observation, const), self.gripper_offsets)] for c in optimization.inequality_constraints]
+        inequality_constraints = [[*map(lambda const: self._eval(c, const), self.gripper_offsets)] for c in optimization.inequality_constraints]
         constraints += list(chain(*inequality_constraints))
         # set constraints
         self.set_constraints(constraints)
