@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="bag_save_path" default="~/.ros"/>
+    <arg name="bag_prefix" default="task"/>
+    <node pkg="rosbag" type="record" name="rosbag_record_topics" output="screen"
+        args="
+        /ee_pose
+        /ee_trajectory
+        /ee_twist
+        /joint_states
+        /perception/cubes/pose
+        /planned_trajectory
+        /target_pose
+        /tf_static
+        /tf
+        /user_message
+        /optimization
+        /optimization_trigger
+        /manual_optimization_trigger
+        visualization_marker
+        /tp_solvetime
+        /od_solvetime
+        /controller_solvetime
+        --output-prefix $(arg bag_save_path)/$(arg bag_prefix)"
+    />
+</launch>

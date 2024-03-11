@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="record" default="false" />
+    <arg name="record_camera" default="false" />
+    <arg name="bag_prefix" default="task" />
+    <arg name="pipeline" default="ompl" doc="Planning pipeline to use with MoveIt"/>
+    <arg name="load_gripper" default="true" />
+    <arg name="transmission" default="position" />
+    <arg name="config" default="$(find l2c)/config/panda_simulated_config.yaml"/>
+
+    <include file="$(find panda_moveit_config)/launch/franka_and_rs.launch"/>
+
+    <node name="state_estimation" pkg="l2c" type="state_estimation.py" output="screen">
+    </node>
+
+    <node name="pose_tracker" pkg="l2c" type="pose_tracker" output="screen">
+        <remap from="~target_pose" to="/target_pose" />
+        <rosparam command="load" file="$(arg config)" />
+        <rosparam command="load" file="$(find l2c)/config/pose_tracking_settings.yaml" />
+    </node>
+
+    <node name="controller" pkg="l2c" type="controller.py" output="screen">
+    </node>
+
+    <include file="$(find l2c)/launch/two_cameras.launch"/>
+
+    <node name="static_tf_broadcaster" pkg="l2c" type="broadcast_static_tf.py" output="screen">
+    </node>
+    <node name="perception_cam_1" pkg="l2c" type="perception.py" output="screen" args="camera_table_1">
+    </node>
+    <node name="perception_cam_2" pkg="l2c" type="perception.py" output="screen" args="camera_table_2">
+    </node>
+    <node name="perception_fusion" pkg="l2c" type="perception_fusion.py" output="screen">
+    </node>
+
+    <node name="llm" pkg="l2c" type="llm.py" output="screen">
+    </node>
+
+    <include file="$(find l2c)/launch/rosbag_record.launch" if="$(arg record)">
+        <arg name="bag_prefix" value="$(arg bag_prefix)" />
+    </include>
+
+    <include file="$(find l2c)/launch/rosbag_record_camera.launch" if="$(arg record_camera)">
+        <arg name="bag_prefix" value="$(arg bag_prefix)" />
+    </include>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find l2c)/rviz/franka.rviz" required="false" output="screen" />
+
+</launch>

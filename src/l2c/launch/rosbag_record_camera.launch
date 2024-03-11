@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="bag_save_path" default="~/.ros"/>
+    <arg name="bag_prefix" default="camera_task"/>
+    <node pkg="rosbag" type="record" name="rosbag_record_camera" output="screen"
+        args="
+        /camera_table_1/color/image_raw/compressed
+        /camera_table_2/color/image_raw/compressed
+        --output-prefix $(arg bag_save_path)/$(arg bag_prefix)"
+    />
+</launch>
